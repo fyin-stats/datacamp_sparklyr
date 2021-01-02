@@ -336,3 +336,119 @@ sentimental_artists %>%
 #     collect(),
 #   times = 5
 # )
+
+
+
+
+
+##############################
+############ Exercise 8
+##############################
+##### Exploring spark data types
+
+
+# 
+# Exploring Spark data types
+# 
+# You've already seen (back in Chapter 1) src_tbls() for listing the DataFrames on Spark that sparklyr can see. You've also seen glimpse() for exploring the columns of a tibble on the R side.
+# 
+# sparklyr has a function named sdf_schema() for exploring the columns of a tibble on the R side. It's easy to call; and a little painful to deal with the return value.
+# 
+# sdf_schema(a_tibble)
+# 
+# The return value is a list, and each element is a list with two elements, containing the name and data type of each column. The exercise shows a data transformation to more easily view the data types.
+# 
+# Here is a comparison of how R data types map to Spark data types. Other data types are not currently supported by sparklyr.
+
+
+# # track_metadata_tbl has been pre-defined
+# track_metadata_tbl
+# 
+# # Get the schema
+# (schema <- sdf_schema(track_metadata_tbl))
+# 
+# # Transform the schema
+# schema %>%
+#   lapply(function(x) do.call(data_frame, x)) %>%
+#   bind_rows()
+
+
+
+
+####################################
+####################################
+################# Exercise 9
+####################################
+####################################
+
+# Shrinking the data by sampling
+# 
+# When you are working with a big dataset, you typically don't really need to work with all of it all the time. Particularly at the start of your project, while you are experimenting wildly with what you want to do, you can often iterate more quickly by working on a smaller subset of the data. sdf_sample() provides a convenient way to do this. It takes a tibble, and the fraction of rows to return. In this case, you want to sample without replacement. To get a random sample of one tenth of your dataset, you would use the following code.
+# 
+# a_tibble %>%
+#   sdf_sample(fraction = 0.1, replacement = FALSE)
+# 
+# Since the results of the sampling are random, and you will likely want to reuse the shrunken dataset, it is common to use compute() to store the results as another Spark data frame.
+# 
+# a_tibble %>%
+#   sdf_sample(<some args>) %>%
+#   compute("sample_dataset")
+# 
+# To make the results reproducible, you can also set a random number seed via the seed argument. Doing this means that you get the same random dataset every time you run your code. It doesn't matter which number you use for the seed; just choose your favorite positive integer.
+
+
+# Use sdf_sample() to sample a subet 
+# 
+
+# # track_metadata_tbl has been pre-defined
+# track_metadata_tbl
+# 
+# track_metadata_tbl %>%
+#   # Sample the data without replacement
+#   sdf_sample(fraction = 0.01, replacement = FALSE, seed = 20000229) %>%
+#   # Compute the result
+#   compute("sample_track_metadata")
+
+
+
+
+###############################
+###############################
+###### Exercise 10
+###############################
+###############################
+## Training / testing partitions
+
+# Training/testing partitions
+# 
+# Most of the time, when you run a predictive model, you need to fit the model on one subset of your data (the "training" set), then test the model predictions against the rest of your data (the "testing" set).
+# 
+# sdf_partition() provides a way of partitioning your data frame into training and testing sets. Its usage is as follows.
+# 
+# a_tibble %>%
+#   sdf_partition(training = 0.7, testing = 0.3)
+# 
+# There are two things to note about the usage. Firstly, if the partition values don't add up to one, they will be scaled so that they do. So if you passed training = 0.35 and testing = 0.15, you'd get double what you asked for. Secondly, you can use any set names that you like, and partition the data into more than two sets. So the following is also valid.
+# 
+# a_tibble %>%
+#   sdf_partition(a = 0.1, b = 0.2, c = 0.3, d = 0.4)
+# 
+# The return value is a list of tibbles. you can access each one using the usual list indexing operators.
+# 
+# partitioned$a
+# partitioned[["b"]]
+
+
+###
+# track_metadata_tbl has been pre-defined
+track_metadata_tbl
+
+partitioned <- track_metadata_tbl %>%
+  # Partition into training and testing sets
+  sdf_partition(training = 0.7, testing = 0.3) # partitioned is a of tbl, tbl_spark class
+
+# Get the dimensions of the training set
+dim(partitioned$training)
+
+# Get the dimensions of the testing set
+dim(partitioned$testing)
