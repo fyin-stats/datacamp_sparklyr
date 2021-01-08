@@ -12,8 +12,11 @@ ipak <- function(pkg){
   try(sapply(pkg, require, character.only = TRUE), silent = TRUE)
 }
 packages <- c("foreach", "doParallel", 
-              "boot", "sparklyr")
+              "boot", "sparklyr","rJava")
 ipak(packages)
+
+# rJava
+# https://stackoverflow.com/questions/28133360/rjava-is-not-picking-up-the-correct-java-version
 
 # install the spark
 ## If you wish to install Spark on your local system, 
@@ -31,3 +34,11 @@ df <- data.frame(x,y)
 # Copy track_metadata to Spark
 track_metadata_tbl <- copy_to(spark_conn, df, overwrite = TRUE)
 
+# # List the data frames available in Spark
+# src_tbls(spark_conn)
+
+grid_sdf <- sdf_expand_grid(spark_conn, x, y)
+
+
+# 
+spark_disconnect(spark_conn)
