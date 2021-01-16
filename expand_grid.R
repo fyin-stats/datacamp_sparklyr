@@ -12,7 +12,7 @@ ipak <- function(pkg){
   try(sapply(pkg, require, character.only = TRUE), silent = TRUE)
 }
 packages <- c("foreach", "doParallel", 
-              "boot", "sparklyr","rJava")
+              "boot", "sparklyr","rJava","dplyr")
 ipak(packages)
 
 # rJava
@@ -34,11 +34,14 @@ df <- data.frame(x,y)
 # Copy track_metadata to Spark
 track_metadata_tbl <- copy_to(spark_conn, df, overwrite = TRUE)
 
+# process data in spark
+track_metadata_tbl <- track_metadata_tbl %>% mutate(z = x^2) %>% mutate(cov_xz = cov(x,z)) 
+
+# 
+glimpse(track_metadata_tbl)
 # # List the data frames available in Spark
 # src_tbls(spark_conn)
-
-grid_sdf <- sdf_expand_grid(spark_conn, x, y)
-
+# grid_sdf <- sdf_expand_grid(spark_conn, x, y)
 
 # 
 spark_disconnect(spark_conn)
